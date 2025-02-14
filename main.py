@@ -1,0 +1,32 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.api.exchage import accounts
+from app.api.exchage import orders
+
+app = FastAPI(
+    title="Upbit API",
+    description="Upbit Exchange API Wrapper",
+    version="1.0.0"
+)
+
+# CORS 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 라우터 등록
+app.include_router(accounts.router)
+app.include_router(orders.router)
+
+@app.get("/")
+async def root():
+    """API 상태 확인"""
+    return {"status": "ok", "message": "Upbit API is running"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 
