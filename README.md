@@ -1,6 +1,13 @@
 # Upbit_Api
 업비트 자동매매 프로그램
 
+## 실행방법
+```bash
+./venv/Scripts/Activate
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
 ## 프로젝트 구조
 
 frontend

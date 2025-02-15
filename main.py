@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.exchage import accounts
 from app.api.exchage import orders
+from app.api.exchage import withdraws
+from app.api.exchage import deposits
+from app.api.exchage import status
+from app.api.exchage import market
 
 app = FastAPI(
     title="Upbit API",
@@ -21,6 +25,10 @@ app.add_middleware(
 # 라우터 등록
 app.include_router(accounts.router)
 app.include_router(orders.router)
+app.include_router(withdraws.router)
+app.include_router(deposits.router)
+app.include_router(status.router)
+app.include_router(market.router)
 
 @app.get("/")
 async def root():
