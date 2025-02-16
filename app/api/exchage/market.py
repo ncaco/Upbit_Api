@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, Query
 import requests
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime
+import httpx
 
 router = APIRouter(
     prefix="/api/upbit",
@@ -227,4 +228,18 @@ async def get_orderbook(markets: str):
         response.raise_for_status()
         return response.json()
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) 
+        raise HTTPException(status_code=400, detail=str(e))
+
+async def get_candles(market: str, to: str, count: int = 200) -> List[Dict]:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            "https://api.upbit.com/v1/candles/minutes/1",
+            params={
+                "market": market,
+                "to": to,
+                "count": count
+            }
+        )
+        if response.status_code != 200:
+            return []
+        return response.json() 

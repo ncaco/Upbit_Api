@@ -21,6 +21,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/upbit/, ''),
         secure: false
+      },
+      '/api/trading': {
+        target: 'http://localhost:8000/api/trading',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/trading/, ''),
       }
     }
   }
