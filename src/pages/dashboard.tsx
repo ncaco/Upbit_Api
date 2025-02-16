@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { market } from '@/lib/api';
 import type { Market, Ticker } from '@/lib/api/market';
 import { MarketOverview } from '@/components/dashboard/market-overview';
-import { OrderBook } from '@/components/dashboard/order-book';
 import { RecentTrades } from '@/components/dashboard/recent-trades';
 import { AssetSummary } from '@/components/dashboard/asset-summary';
 import { AutoTradingStatus } from '@/components/dashboard/auto-trading-status';
@@ -134,15 +133,10 @@ export default function DashboardPage() {
         <MarketOverview market={selectedMarket} />
       </div>
 
-      {/* 차트 및 호가 */}
-      <div className="grid-container grid-cols-1 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <RealTimePrice market={selectedMarket} />
-          </div>
-        </div>
-        <div>
-          <OrderBook market={selectedMarket} />
+      {/* 차트 */}
+      <div className="grid-container grid-cols-1">
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <RealTimePrice market={selectedMarket} />
         </div>
       </div>
 

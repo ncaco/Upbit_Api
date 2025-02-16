@@ -1,17 +1,27 @@
 'use client';
 
-import { useMarketWebSocket } from '@/hooks/use-market-websocket';
+import { useQuery } from '@tanstack/react-query';
+import { market } from '@/lib/api';
 import { formatNumber } from '@/lib/utils';
+import type { Ticker } from '@/lib/api/market';
 
 interface MarketOverviewProps {
   market: string;
 }
 
-export function MarketOverview({ market }: MarketOverviewProps) {
-  const { ticker } = useMarketWebSocket(market);
-  const [base, quote] = market.split('-');
+export function MarketOverview({ market: marketCode }: MarketOverviewProps) {
+  const { data: ticker, isLoading } = useQuery({
+    queryKey: ['ticker', marketCode],
+    queryFn: async () => {
+      const response = await market.getTicker(marketCode);
+      return response.data[0];
+    },
+    refetchInterval: 1000
+  });
 
-  if (!ticker) {
+  const [base, quote] = marketCode.split('-');
+
+  if (isLoading || !ticker) {
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="animate-pulse space-y-4">

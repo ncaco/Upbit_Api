@@ -1,14 +1,23 @@
-import { useTrades } from '@/hooks/use-trades';
+import { useQuery } from '@tanstack/react-query';
+import { market } from '@/lib/api';
 import { formatNumber } from '@/lib/utils';
+import type { Trade } from '@/lib/api/market';
 
 interface RecentTradesProps {
   market: string;
 }
 
-export function RecentTrades({ market }: RecentTradesProps) {
-  const { trades } = useTrades(market);
+export function RecentTrades({ market: marketCode }: RecentTradesProps) {
+  const { data: trades = [], isLoading } = useQuery({
+    queryKey: ['trades', marketCode],
+    queryFn: async () => {
+      const response = await market.getTrades(marketCode);
+      return response.data;
+    },
+    refetchInterval: 1000
+  });
 
-  if (trades.length === 0) {
+  if (isLoading || trades.length === 0) {
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-4">
         <div className="animate-pulse space-y-4">
@@ -34,12 +43,12 @@ export function RecentTrades({ market }: RecentTradesProps) {
             <tr className="border-b border-gray-100">
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">체결시간</th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">체결가격(KRW)</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">체결량({market.split('-')[1]})</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">체결량({marketCode.split('-')[1]})</th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">체결금액(KRW)</th>
             </tr>
           </thead>
           <tbody>
-            {trades.map((trade) => {
+            {trades.map((trade: Trade) => {
               const tradeTime = new Date(trade.timestamp);
               const isAsk = trade.ask_bid === 'ASK';
               const priceColor = isAsk ? 'text-[#1261c4]' : 'text-[#d24f45]';

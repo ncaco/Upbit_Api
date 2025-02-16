@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { WebSocketStatus } from '@/components/common/websocket-status';
 import { Link } from 'react-router-dom';
+
 export function Header() {
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleString());
 
@@ -37,7 +37,6 @@ export function Header() {
 
           {/* 우측 상태 표시 */}
           <div className="flex items-center space-x-4">
-            <WebSocketStatus />
             <div className="text-xs text-gray-500">
               {currentTime}
             </div>
