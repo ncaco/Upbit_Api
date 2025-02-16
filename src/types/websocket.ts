@@ -9,8 +9,13 @@ export interface WebSocketTickerMessage {
   acc_trade_volume: number;
   acc_trade_price: number;
   timestamp: number;
-  acc_trade_volume_24h: number;
-  acc_trade_price_24h: number;
+  acc_ask_volume: number;
+  acc_bid_volume: number;
+  highest_52_week_price: number;
+  highest_52_week_date: string;
+  lowest_52_week_price: number;
+  lowest_52_week_date: string;
+  trade_volume: number;
   change: 'RISE' | 'EVEN' | 'FALL';
   change_price: number;
   change_rate: number;
@@ -27,15 +32,19 @@ export interface WebSocketTradeMessage {
   prev_closing_price: number;
   change: 'RISE' | 'EVEN' | 'FALL';
   change_price: number;
+  trade_date: string;
+  trade_time: string;
   trade_timestamp: number;
   timestamp: number;
   sequential_id: number;
-  stream_type: 'REALTIME' | 'SNAPSHOT';
+  stream_type: string;
 }
 
 export interface WebSocketOrderbookMessage {
   type: 'orderbook';
   code: string;
+  total_ask_size: number;
+  total_bid_size: number;
   orderbook_units: Array<{
     ask_price: number;
     bid_price: number;
@@ -45,4 +54,7 @@ export interface WebSocketOrderbookMessage {
   timestamp: number;
 }
 
-export type WebSocketMessage = WebSocketTickerMessage | WebSocketTradeMessage | WebSocketOrderbookMessage; 
+export type WebSocketMessage = 
+  | WebSocketTickerMessage 
+  | WebSocketTradeMessage 
+  | WebSocketOrderbookMessage; 

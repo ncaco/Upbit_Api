@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, memo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { formatNumber } from '@/lib/utils';
 import { useWebSocket } from '@/hooks/use-websocket';
@@ -15,53 +15,26 @@ interface OrderbookData {
   type: string;
   code: string;
   orderbook_units: OrderbookUnit[];
-  timestamp: number;
 }
 
-const OrderBookRow = memo(({ 
-  price, 
-  size, 
-  maxSize, 
-  type 
-}: { 
-  price: number; 
-  size: number; 
-  maxSize: number; 
-  type: 'ask' | 'bid';
-}) => (
-  <div className="grid grid-cols-3 text-sm">
-    <span className={type === 'ask' ? 'text-[#c84a31]' : 'text-[#1261c4]'}>
-      {formatNumber(price)}
-    </span>
-    <span className="text-center text-gray-600">
-      {formatNumber(size)}
-    </span>
-    <div className="relative h-full">
-      <div 
-        className={`absolute inset-0 ${type === 'ask' ? 'bg-[#ffeaea]' : 'bg-[#ebf6ff]'} opacity-40`}
-        style={{ width: `${(size / maxSize) * 100}%` }} 
-      />
-    </div>
-  </div>
-));
+interface OrderBookProps {
+  market: string;
+}
 
-export function OrderBook() {
+export function OrderBook({ market }: OrderBookProps) {
   const { subscribe, lastMessage } = useWebSocket();
   const [orderbook, setOrderbook] = useState<OrderbookData | null>(null);
 
   useEffect(() => {
-    subscribe('orderbook', ['KRW-BTC']);
+    subscribe('orderbook', [market]);
     return () => {
       setOrderbook(null);
     };
-  }, [subscribe]);
+  }, [subscribe, market]);
 
   useEffect(() => {
     if (lastMessage?.type === 'orderbook') {
-      setOrderbook(prev => {
-        if (prev?.timestamp === lastMessage.timestamp) return prev;
-        return lastMessage as WebSocketOrderbookMessage;
-      });
+      setOrderbook(lastMessage as WebSocketOrderbookMessage);
     }
   }, [lastMessage]);
 
@@ -70,34 +43,65 @@ export function OrderBook() {
     ...orderbook?.orderbook_units?.map(unit => unit.bid_size) || [0]
   ), [orderbook?.orderbook_units]);
 
-  const asks = useMemo(() => 
-    orderbook?.orderbook_units?.slice().reverse().map((unit, index) => (
-      <OrderBookRow
-        key={`ask-${unit.ask_price}`}
-        price={unit.ask_price}
-        size={unit.ask_size}
-        maxSize={maxSize}
-        type="ask"
-      />
-    )), [orderbook?.orderbook_units, maxSize]);
-
-  const bids = useMemo(() => 
-    orderbook?.orderbook_units?.map((unit, index) => (
-      <OrderBookRow
-        key={`bid-${unit.bid_price}`}
-        price={unit.bid_price}
-        size={unit.bid_size}
-        maxSize={maxSize}
-        type="bid"
-      />
-    )), [orderbook?.orderbook_units, maxSize]);
-
   return (
-    <Card className="p-4 bg-[#f9f9f9]">
-      <h2 className="text-sm text-gray-500 mb-4">호가</h2>
-      <div className="space-y-1">
-        <div className="asks space-y-1">{asks}</div>
-        <div className="bids space-y-1">{bids}</div>
+    <Card className="bg-white border-0 shadow-none">
+      <div className="border-b border-gray-200 py-3 px-4">
+        <h2 className="text-sm font-medium text-gray-900">호가</h2>
+      </div>
+      <div className="text-xs">
+        {/* 헤더 */}
+        <div className="grid grid-cols-3 py-2 px-4 text-gray-500 border-b border-gray-100">
+          <div className="text-left">가격(KRW)</div>
+          <div className="text-right">수량(BTC)</div>
+          <div className="text-right">누적량</div>
+        </div>
+        
+        {/* 매도 호가 */}
+        <div className="asks">
+          {orderbook?.orderbook_units?.slice().reverse().map((unit, i) => {
+            const ratio = (unit.ask_size / maxSize) * 100;
+            return (
+              <div key={i} className="relative">
+                <div 
+                  className="absolute inset-0 bg-[#ff363617]" 
+                  style={{ width: `${ratio}%`, right: 0 }}
+                />
+                <div className="grid grid-cols-3 py-[3px] px-4 relative">
+                  <div className="text-left text-[#d24f45]">{formatNumber(unit.ask_price)}</div>
+                  <div className="text-right">{unit.ask_size.toFixed(4)}</div>
+                  <div className="text-right text-gray-500">{unit.ask_size.toFixed(4)}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        
+        {/* 현재가 */}
+        <div className="py-3 px-4 text-center bg-gray-50 border-y border-gray-100">
+          <span className="text-[#d24f45] text-sm font-medium">
+            {formatNumber(orderbook?.orderbook_units?.[0]?.bid_price || 0)}
+          </span>
+        </div>
+        
+        {/* 매수 호가 */}
+        <div className="bids">
+          {orderbook?.orderbook_units?.map((unit, i) => {
+            const ratio = (unit.bid_size / maxSize) * 100;
+            return (
+              <div key={i} className="relative">
+                <div 
+                  className="absolute inset-0 bg-[#1261c417]" 
+                  style={{ width: `${ratio}%` }}
+                />
+                <div className="grid grid-cols-3 py-[3px] px-4 relative">
+                  <div className="text-left text-[#1261c4]">{formatNumber(unit.bid_price)}</div>
+                  <div className="text-right">{unit.bid_size.toFixed(4)}</div>
+                  <div className="text-right text-gray-500">{unit.bid_size.toFixed(4)}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </Card>
   );

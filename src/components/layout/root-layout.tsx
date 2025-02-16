@@ -1,22 +1,28 @@
+import { Outlet } from 'react-router-dom';
 import { Header } from './header';
-import { Sidebar } from './sidebar';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { WebSocketProvider } from '@/contexts/websocket-context';
 
-interface RootLayoutProps {
-  children: React.ReactNode;
-}
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1
+    }
+  }
+});
 
-export function RootLayout({ children }: RootLayoutProps) {
+export function RootLayout() {
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="flex h-screen">
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
+    <QueryClientProvider client={queryClient}>
+      <WebSocketProvider>
+        <div className="min-h-screen bg-gray-50">
           <Header />
-          <main className="flex-1 p-4 overflow-auto">
-            {children}
+          <main className="max-w-7xl mx-auto px-4 py-6">
+            <Outlet />
           </main>
         </div>
-      </div>
-    </div>
+      </WebSocketProvider>
+    </QueryClientProvider>
   );
 } 

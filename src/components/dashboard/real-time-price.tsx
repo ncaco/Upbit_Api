@@ -1,55 +1,38 @@
-import { useEffect } from 'react';
-import { useWebSocket } from '@/hooks/use-websocket';
-import { Card } from '@/components/ui/card';
+import { useTicker } from '@/hooks/use-ticker';
 import { formatNumber } from '@/lib/utils';
-import { WebSocketTickerMessage } from '@/types/websocket';
 
-export function RealTimePrice() {
-  const { lastMessage, subscribe } = useWebSocket();
-  const tickerData = lastMessage?.type === 'ticker' ? lastMessage as WebSocketTickerMessage : null;
+interface RealTimePriceProps {
+  market: string;
+}
 
-  useEffect(() => {
-    subscribe('ticker', ['KRW-BTC']);
-  }, [subscribe]);
+export function RealTimePrice({ market }: RealTimePriceProps) {
+  const ticker = useTicker(market);
 
-  const getChangeColor = () => {
-    if (!tickerData) return 'text-gray-900';
-    switch (tickerData.change) {
-      case 'RISE':
-        return 'text-red-500';
-      case 'FALL':
-        return 'text-blue-500';
-      default:
-        return 'text-gray-900';
-    }
-  };
+  if (!ticker) {
+    return (
+      <div className="animate-pulse">
+        <div className="h-6 bg-gray-200 rounded w-32" />
+      </div>
+    );
+  }
+
+  const isPositive = ticker.change === 'RISE';
+  const changeColor = isPositive ? 'text-[#d24f45]' : 'text-[#1261c4]';
+  const changeSign = isPositive ? '+' : '';
+  const changeRate = (ticker.change_rate * 100).toFixed(2);
 
   return (
-    <Card className="p-4">
-      <h2 className="text-lg font-bold mb-4">실시간 가격</h2>
-      <div className={`text-3xl font-bold ${getChangeColor()}`}>
-        {tickerData ? formatNumber(tickerData.trade_price) : '-'}
+    <div className="space-y-1">
+      <div className="text-2xl font-bold">
+        {formatNumber(ticker.trade_price)}
         <span className="text-sm text-gray-500 ml-1">KRW</span>
       </div>
-      {tickerData && (
-        <>
-          <div className="text-sm text-gray-500 mt-2">
-            거래량: {formatNumber(tickerData.acc_trade_volume_24h)} BTC
-          </div>
-          <div className="text-sm mt-1">
-            <span className={getChangeColor()}>
-              {tickerData.signed_change_rate > 0 ? '+' : ''}
-              {(tickerData.signed_change_rate * 100).toFixed(2)}%
-            </span>
-            <span className="text-gray-500 ml-2">
-              고가: {formatNumber(tickerData.high_price)}
-            </span>
-            <span className="text-gray-500 ml-2">
-              저가: {formatNumber(tickerData.low_price)}
-            </span>
-          </div>
-        </>
-      )}
-    </Card>
+      <div className={`text-sm ${changeColor}`}>
+        {changeSign}{changeRate}% ({changeSign}{formatNumber(ticker.change_price)})
+      </div>
+      <div className="text-xs text-gray-500">
+        거래량: {formatNumber(ticker.acc_trade_volume)} {market.split('-')[1]}
+      </div>
+    </div>
   );
 } 

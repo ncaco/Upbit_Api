@@ -1,14 +1,23 @@
-import { OrderForm } from '@/components/trade/order-form';
-import { OrderHistory } from '@/components/trade/order-history';
+import { TradingBot } from '@/components/auto-trading/trading-bot';
+import { TradingMonitor } from '@/components/auto-trading/trading-monitor';
+import { TradingLog } from '@/components/auto-trading/trading-log';
 
-export function Trade() {
+export default function TradePage() {
   return (
-    <div className="grid grid-cols-12 gap-4">
-      <div className="col-span-8">
-        <OrderForm />
+    <div className="layout-container">
+      {/* 자동매매 모니터링 */}
+      <div className="grid-container grid-cols-1">
+        <TradingMonitor />
       </div>
-      <div className="col-span-4">
-        <OrderHistory />
+
+      {/* 자동매매 설정 및 로그 */}
+      <div className="grid-container grid-cols-1 lg:grid-cols-2">
+        <div className="space-y-6">
+          <TradingBot />
+        </div>
+        <div className="space-y-6">
+          <TradingLog />
+        </div>
       </div>
     </div>
   );

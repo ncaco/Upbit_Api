@@ -1,23 +1,31 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { RootLayout } from '@/components/layout/root-layout';
-import { AppRoutes } from '@/routes';
-import { WebSocketProvider } from '@/contexts/websocket-context';
+import DashboardPage from '@/pages/dashboard';
+import TradePage from '@/pages/trade';
+import AssetsPage from '@/pages/assets';
+import './App.css';
 
-const queryClient = new QueryClient();
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <RootLayout />,
+    children: [
+      {
+        index: true,
+        element: <DashboardPage />
+      },
+      {
+        path: 'trade',
+        element: <TradePage />
+      },
+      {
+        path: 'assets',
+        element: <AssetsPage />
+      }
+    ]
+  }
+]);
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <WebSocketProvider>
-        <BrowserRouter>
-          <RootLayout>
-            <AppRoutes />
-          </RootLayout>
-        </BrowserRouter>
-      </WebSocketProvider>
-    </QueryClientProvider>
-  );
+export default function App() {
+  return <RouterProvider router={router} />;
 }
-
-export default App;

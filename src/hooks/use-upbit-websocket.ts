@@ -1,49 +1,40 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { WebSocketManager } from '@/lib/websocket-manager';
+import { WebSocketMessage } from '@/types/websocket';
 
-interface WebSocketMessage {
-  type: string;
-  code: string;
-  trade_price: number;
-  trade_volume: number;
-  timestamp: number;
-}
-
-export function useUpbitWebSocket(markets: string[]) {
-  const ws = useRef<WebSocket | null>(null);
-  const [data, setData] = useState<WebSocketMessage | null>(null);
+export function useWebSocket() {
+  const [status, setStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+  const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
 
   useEffect(() => {
-    // 웹소켓 연결
-    ws.current = new WebSocket('wss://api.upbit.com/websocket/v1');
+    const wsManager = WebSocketManager.getInstance();
+    
+    // 상태 핸들러 등록
+    wsManager.addStatusHandler(setStatus);
+    wsManager.addMessageHandler(setLastMessage);
 
-    ws.current.onopen = () => {
-      if (ws.current?.readyState === 1) {
-        ws.current.send(JSON.stringify([
-          { ticket: "UNIQUE_TICKET" },
-          { type: "trade", codes: markets },
-          { format: "SIMPLE" }
-        ]));
-      }
-    };
+    // 초기 연결 시도
+    wsManager.connect();
 
-    ws.current.onmessage = (event) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          const data = JSON.parse(reader.result);
-          setData(data);
-        }
-      };
-      reader.readAsText(event.data);
-    };
-
-    // Clean up
+    // 컴포넌트 언마운트 시 정리
     return () => {
-      if (ws.current) {
-        ws.current.close();
-      }
+      wsManager.removeStatusHandler(setStatus);
+      wsManager.removeMessageHandler(setLastMessage);
     };
-  }, [markets]);
+  }, []);
 
-  return data;
+  const subscribe = (type: 'ticker' | 'trade' | 'orderbook', codes: string[]) => {
+    WebSocketManager.getInstance().subscribe(type, codes);
+  };
+
+  const unsubscribe = (type: 'ticker' | 'trade' | 'orderbook', codes: string[]) => {
+    WebSocketManager.getInstance().unsubscribe(type, codes);
+  };
+
+  return {
+    status,
+    lastMessage,
+    subscribe,
+    unsubscribe
+  };
 } 
