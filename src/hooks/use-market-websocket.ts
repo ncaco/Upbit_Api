@@ -7,33 +7,44 @@ export function useMarketWebSocket(market: string) {
   const [ticker, setTicker] = useState<WebSocketTickerMessage | null>(null);
   const [trades, setTrades] = useState<WebSocketTradeMessage[]>([]);
   const [orderbook, setOrderbook] = useState<WebSocketOrderbookMessage | null>(null);
-  const subscribed = useRef(false);
+  const prevMarketRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (subscribed.current) return;
-    
-    // 마켓 데이터 구독
-    //console.log(`마켓 구독 시작: ${market}`);
-    subscribe('ticker', [market]);
-    subscribe('trade', [market]);
-    subscribe('orderbook', [market]);
-    
-    subscribed.current = true;
+    // 마켓이 변경된 경우에만 구독 갱신
+    if (prevMarketRef.current !== market) {
+      // 이전 마켓 구독 해제
+      if (prevMarketRef.current) {
+        unsubscribe('ticker', [prevMarketRef.current]);
+        unsubscribe('trade', [prevMarketRef.current]);
+        unsubscribe('orderbook', [prevMarketRef.current]);
+      }
+      
+      // 상태 초기화
+      setTicker(null);
+      setTrades([]);
+      setOrderbook(null);
+      
+      // 새로운 마켓 구독
+      subscribe('ticker', [market]);
+      subscribe('trade', [market]);
+      subscribe('orderbook', [market]);
+      
+      // 현재 마켓 저장
+      prevMarketRef.current = market;
+    }
 
     // 컴포넌트 언마운트 시 구독 해제
     return () => {
-      //console.log(`마켓 구독 해제: ${market}`);
-      if (subscribed.current) {
+      if (market) {
         unsubscribe('ticker', [market]);
         unsubscribe('trade', [market]);
         unsubscribe('orderbook', [market]);
-        subscribed.current = false;
       }
     };
   }, [market, subscribe, unsubscribe]);
 
   useEffect(() => {
-    if (!lastMessage || !subscribed.current) return;
+    if (!lastMessage || !market) return;
 
     if (lastMessage.type === 'ticker' && lastMessage.code === market) {
       setTicker(lastMessage as WebSocketTickerMessage);
