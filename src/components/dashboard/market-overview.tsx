@@ -3,7 +3,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { market } from '@/lib/api';
 import { formatNumber } from '@/lib/utils';
-import type { Ticker } from '@/lib/api/market';
 
 interface MarketOverviewProps {
   market: string;

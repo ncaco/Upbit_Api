@@ -12,7 +12,10 @@ export function RecentTrades({ market: marketCode }: RecentTradesProps) {
     queryKey: ['trades', marketCode],
     queryFn: async () => {
       const response = await market.getTrades(marketCode);
-      return response.data;
+      const uniqueTrades = Array.from(
+        new Map(response.data.map((trade: Trade) => [trade.sequential_id, trade])).values()
+      ) as Trade[];
+      return uniqueTrades.sort((a: Trade, b: Trade) => b.timestamp - a.timestamp);
     },
     refetchInterval: 1000
   });
@@ -54,7 +57,10 @@ export function RecentTrades({ market: marketCode }: RecentTradesProps) {
               const priceColor = isAsk ? 'text-[#1261c4]' : 'text-[#d24f45]';
               
               return (
-                <tr key={trade.sequential_id} className="hover:bg-gray-50">
+                <tr 
+                  key={trade.sequential_id} 
+                  className="hover:bg-gray-50 bg-white"
+                >
                   <td className="px-4 py-2 text-xs text-gray-500">
                     {tradeTime.toLocaleTimeString()}
                   </td>
