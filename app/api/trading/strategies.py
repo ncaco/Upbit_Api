@@ -15,19 +15,51 @@ class TradingStrategyBase(BaseModel):
     enabled: bool = False
     params: Dict[str, float] = {}
 
+class TradingStrategyResponse(BaseModel):
+    id: str
+    type: str
+    market: str
+    enabled: bool
+    params: Dict[str, float]
+    createdAt: Optional[datetime] = None
+    updatedAt: Optional[datetime] = None
+
 class TradingStrategy:
     def __init__(self, market: str, type: str, params: dict):
         self.market = market
         self.type = type
         self.params = params
+        self._id = f"{market}_{type}"
+        self._enabled = True
+        self._created_at = datetime.now()
+        self._updated_at = datetime.now()
 
     @property
     def id(self) -> str:
-        return f"{self.market}_{self.type}"
+        return self._id
 
     @property
     def enabled(self) -> bool:
-        return True
+        return self._enabled
+
+    @property
+    def created_at(self) -> datetime:
+        return self._created_at
+
+    @property
+    def updated_at(self) -> datetime:
+        return self._updated_at
+
+    def to_response(self) -> TradingStrategyResponse:
+        return TradingStrategyResponse(
+            id=self.id,
+            type=self.type,
+            market=self.market,
+            enabled=self.enabled,
+            params=self.params,
+            createdAt=self.created_at,
+            updatedAt=self.updated_at
+        )
 
     def calculate_signal(self, candles: List[Dict]) -> Optional[Dict]:
         if len(candles) < 2:
@@ -120,40 +152,32 @@ class TradingStrategy:
 # 임시 메모리 저장소
 strategies: Dict[str, TradingStrategy] = {}
 
-@router.get("", response_model=List[TradingStrategy])
+@router.get("", response_model=List[TradingStrategyResponse])
 async def get_strategies():
-    return list(strategies.values())
+    return [strategy.to_response() for strategy in strategies.values()]
 
-@router.post("", response_model=TradingStrategy)
+@router.post("", response_model=TradingStrategyResponse)
 async def create_strategy(strategy: TradingStrategyBase):
-    strategy_id = str(uuid.uuid4())
-    now = datetime.now()
-    
     new_strategy = TradingStrategy(
-        id=strategy_id,
-        createdAt=now,
-        updatedAt=now,
-        **strategy.dict()
+        market=strategy.market,
+        type=strategy.type,
+        params=strategy.params
     )
-    
-    strategies[strategy_id] = new_strategy
-    return new_strategy
+    strategies[new_strategy.id] = new_strategy
+    return new_strategy.to_response()
 
-@router.patch("/{strategy_id}", response_model=TradingStrategy)
+@router.patch("/{strategy_id}", response_model=TradingStrategyResponse)
 async def update_strategy(strategy_id: str, strategy: TradingStrategyBase):
     if strategy_id not in strategies:
         raise HTTPException(status_code=404, detail="Strategy not found")
     
-    existing = strategies[strategy_id]
     updated = TradingStrategy(
-        id=strategy_id,
-        createdAt=existing.createdAt,
-        updatedAt=datetime.now(),
-        **strategy.dict()
+        market=strategy.market,
+        type=strategy.type,
+        params=strategy.params
     )
-    
     strategies[strategy_id] = updated
-    return updated
+    return updated.to_response()
 
 @router.delete("/{strategy_id}")
 async def delete_strategy(strategy_id: str):
@@ -169,10 +193,8 @@ async def start_strategy(strategy_id: str):
         raise HTTPException(status_code=404, detail="Strategy not found")
     
     strategy = strategies[strategy_id]
-    updated = TradingStrategy(
-        **{**strategy.dict(), "enabled": True, "updatedAt": datetime.now()}
-    )
-    strategies[strategy_id] = updated
+    strategy._enabled = True
+    strategy._updated_at = datetime.now()
     return {"message": "Strategy started"}
 
 @router.post("/{strategy_id}/stop")
@@ -181,8 +203,6 @@ async def stop_strategy(strategy_id: str):
         raise HTTPException(status_code=404, detail="Strategy not found")
     
     strategy = strategies[strategy_id]
-    updated = TradingStrategy(
-        **{**strategy.dict(), "enabled": False, "updatedAt": datetime.now()}
-    )
-    strategies[strategy_id] = updated
+    strategy._enabled = False
+    strategy._updated_at = datetime.now()
     return {"message": "Strategy stopped"} 

@@ -6,40 +6,15 @@ import httpx
 from app.api.exchage.market import get_candles
 from app.api.trading.strategies import create_strategy, TradingStrategy
 from app.api.upbit.client import UpbitClient
-
-# 모델 정의
-class BacktestTrade(BaseModel):
-    timestamp: int
-    type: str
-    price: float
-    volume: float
-    profit: Optional[float] = None
-    profit_rate: Optional[float] = None
-    balance: float
-    cumulative_profit: float
-    cumulative_profit_rate: float
-
-class BacktestResult(BaseModel):
-    trades: List[BacktestTrade] = []
-    total_trades: int = 0
-    win_count: int = 0
-    loss_count: int = 0
-    total_profit: float = 0
-    profit_rate: float = 0
-    max_drawdown: float = 0
-    winning_streak: int = 0
-    losing_streak: int = 0
-    average_profit: float = 0
-    average_loss: float = 0
-    max_profit: float = 0
-    max_loss: float = 0
-    profit_factor: float = 0
-    average_holding_period: float = 0
-
-class BacktestRequest(BaseModel):
-    strategy: Dict  # TradingStrategy 대신 Dict 사용
-    period: str
-    initial_capital: float
+from app.api.trading.models import (
+    BacktestTrade,
+    MonthlyReturn,
+    DailyReturn,
+    TradePatterns,
+    StrategyImprovement,
+    BacktestResult,
+    BacktestRequest
+)
 
 # 신호 계산 함수
 def calculate_signal(strategy: TradingStrategy, candle: Dict) -> Optional[Dict]:
@@ -125,7 +100,7 @@ class Backtester:
                     profit_rate = current_profit_rate
                     
                     balance += position["volume"] * candle["trade_price"]
-                    result.total_profit += profit
+                    result.totalProfit += profit
                     
                     # 거래 기록 추가
                     trade = BacktestTrade(
@@ -136,20 +111,20 @@ class Backtester:
                         profit=profit,
                         profit_rate=profit_rate,
                         balance=balance,
-                        cumulative_profit=result.total_profit,
-                        cumulative_profit_rate=(result.total_profit / self.initial_balance) * 100
+                        cumulative_profit=result.totalProfit,
+                        cumulative_profit_rate=(result.totalProfit / self.initial_balance) * 100
                     )
                     trades.append(trade)
                     
                     # 통계 업데이트
                     if profit > 0:
-                        result.win_count += 1
+                        result.winCount += 1
                         current_streak = max(1, current_streak + 1)
-                        result.winning_streak = max(result.winning_streak, current_streak)
+                        result.winningStreak = max(result.winningStreak, current_streak)
                     else:
-                        result.loss_count += 1
+                        result.lossCount += 1
                         current_streak = min(-1, current_streak - 1)
-                        result.losing_streak = min(result.losing_streak, current_streak)
+                        result.losingStreak = min(result.losingStreak, current_streak)
                     
                     position = None
                     continue
@@ -184,8 +159,8 @@ class Backtester:
                         price=candle["trade_price"],
                         volume=volume,
                         balance=balance,
-                        cumulative_profit=result.total_profit,
-                        cumulative_profit_rate=(result.total_profit / self.initial_balance) * 100
+                        cumulative_profit=result.totalProfit,
+                        cumulative_profit_rate=(result.totalProfit / self.initial_balance) * 100
                     )
                     trades.append(trade)
                     
@@ -199,7 +174,7 @@ class Backtester:
                     actual_profit = profit - fee
                     
                     balance += (position["volume"] * candle["trade_price"]) * (1 - 0.0005)  # 수수료 차감
-                    result.total_profit += actual_profit
+                    result.totalProfit += actual_profit
                     last_trade_time = candle["timestamp"]
                     
                     trade = BacktestTrade(
@@ -210,19 +185,19 @@ class Backtester:
                         profit=actual_profit,
                         profit_rate=profit_rate,
                         balance=balance,
-                        cumulative_profit=result.total_profit,
-                        cumulative_profit_rate=(result.total_profit / self.initial_balance) * 100
+                        cumulative_profit=result.totalProfit,
+                        cumulative_profit_rate=(result.totalProfit / self.initial_balance) * 100
                     )
                     trades.append(trade)
                     
                     if actual_profit > 0:
-                        result.win_count += 1
+                        result.winCount += 1
                         current_streak = max(1, current_streak + 1)
-                        result.winning_streak = max(result.winning_streak, current_streak)
+                        result.winningStreak = max(result.winningStreak, current_streak)
                     else:
-                        result.loss_count += 1
+                        result.lossCount += 1
                         current_streak = min(-1, current_streak - 1)
-                        result.losing_streak = min(result.losing_streak, current_streak)
+                        result.losingStreak = min(result.losingStreak, current_streak)
                     
                     position = None
             
@@ -231,7 +206,7 @@ class Backtester:
                 peak_balance = balance
             else:
                 drawdown = (peak_balance - balance) / peak_balance * 100
-                result.max_drawdown = max(result.max_drawdown, drawdown)
+                result.maxDrawdown = max(result.maxDrawdown, drawdown)
         
         # 최종 포지션 청산
         if position:
@@ -242,7 +217,7 @@ class Backtester:
             actual_profit = profit - fee
             
             balance += (position["volume"] * last_candle["trade_price"]) * (1 - 0.0005)
-            result.total_profit += actual_profit
+            result.totalProfit += actual_profit
             
             trade = BacktestTrade(
                 timestamp=last_candle["timestamp"],
@@ -252,8 +227,8 @@ class Backtester:
                 profit=actual_profit,
                 profit_rate=profit_rate,
                 balance=balance,
-                cumulative_profit=result.total_profit,
-                cumulative_profit_rate=(result.total_profit / self.initial_balance) * 100
+                cumulative_profit=result.totalProfit,
+                cumulative_profit_rate=(result.totalProfit / self.initial_balance) * 100
             )
             trades.append(trade)
         
@@ -265,25 +240,25 @@ class Backtester:
     def _calculate_statistics(self, result: BacktestResult, trades: List[BacktestTrade]):
         """거래 결과 통계 계산"""
         result.trades = trades
-        result.total_trades = len(trades)
-        result.profit_rate = (result.total_profit / self.initial_balance) * 100
+        result.totalTrades = len(trades)
+        result.profitRate = (result.totalProfit / self.initial_balance) * 100
         
-        if result.total_trades > 0:
-            result.win_rate = (result.win_count / result.total_trades) * 100
+        if result.totalTrades > 0:
+            result.winRate = (result.winCount / result.totalTrades) * 100
             
             profits = [t.profit for t in trades if t.profit and t.profit > 0]
             losses = [t.profit for t in trades if t.profit and t.profit < 0]
             
             if profits:
-                result.average_profit = sum(profits) / len(profits)
-                result.max_profit = max(profits)
+                result.averageProfit = sum(profits) / len(profits)
+                result.maxProfit = max(profits)
             
             if losses:
-                result.average_loss = sum(losses) / len(losses)
-                result.max_loss = min(losses)
+                result.averageLoss = sum(losses) / len(losses)
+                result.maxLoss = min(losses)
             
-            if result.average_loss != 0:
-                result.profit_factor = abs(result.average_profit / result.average_loss)
+            if result.averageLoss != 0:
+                result.profitFactor = abs(result.averageProfit / result.averageLoss)
             
             # 평균 보유 기간 계산
             holding_periods = []
@@ -293,7 +268,7 @@ class Backtester:
                     holding_periods.append(holding_period)
             
             if holding_periods:
-                result.average_holding_period = sum(holding_periods) / len(holding_periods)
+                result.averageHoldingPeriod = sum(holding_periods) / len(holding_periods)
 
 # API 라우터
 router = APIRouter(
@@ -321,8 +296,12 @@ async def run_backtest(request: BacktestRequest) -> BacktestResult:
             unit="1"  # 1분봉 사용
         )
         
-        # 전략 생성
-        strategy = await TradingStrategy.create(request.strategy)
+        # 전략 객체 생성
+        strategy = TradingStrategy(
+            market=request.strategy["market"],
+            type=request.strategy["type"],
+            params=request.strategy["params"]
+        )
         
         # 백테스터 실행
         backtester = Backtester(

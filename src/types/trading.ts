@@ -10,12 +10,6 @@ export interface TradingStrategy {
   enabled?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  execute: (candles: Candle[]) => {
-    shouldBuy: boolean;
-    shouldSell: boolean;
-    targetPrice: number;
-    profitRate: number;
-  } | null;
 }
 
 export interface TradingStats {
@@ -163,7 +157,7 @@ export interface BacktestRequest {
   strategy: {
     market: string;
     type: TradingStrategyType;
-    params: Record<string, any>;
+    params: VolatilityBreakoutParams | MovingAverageParams | RSIParams;
   };
   period: string;  // "1M" | "3M" | "6M" | "1Y"
   initial_capital: number;  // 만원 단위

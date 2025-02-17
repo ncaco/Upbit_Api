@@ -3,7 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { trading } from '@/lib/api/trading';
 import { market } from '@/lib/api';
 import { formatNumber } from '@/lib/utils';
-import type { TradingStrategy, TradingStrategyType } from '@/types/trading';
+import type { 
+  TradingStrategy, 
+  TradingStrategyType, 
+  VolatilityBreakoutParams,
+  MovingAverageParams,
+  RSIParams
+} from '@/types/trading';
 import type { Market, Ticker } from '@/lib/api/market';
 import { BacktestRunner } from './backtest-runner';
 
@@ -34,9 +40,10 @@ const STRATEGY_TYPES: Record<TradingStrategyType, string> = {
   'RSI': 'RSI'
 };
 
-const DEFAULT_PARAMS: Record<TradingStrategyType, Record<string, number>> = {
+const DEFAULT_PARAMS: Record<TradingStrategyType, VolatilityBreakoutParams | MovingAverageParams | RSIParams> = {
   'VOLATILITY_BREAKOUT': {
     k: 0.5,
+    period: 20,
     profitTarget: 1.0,
     stopLoss: 2.0
   },
