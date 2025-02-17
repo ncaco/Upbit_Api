@@ -3,13 +3,13 @@ import type { Candle } from '@/lib/api/market';
 export type TradingStrategyType = 'VOLATILITY_BREAKOUT' | 'MOVING_AVERAGE' | 'RSI';
 
 export interface TradingStrategy {
-  id: string;
-  type: TradingStrategyType;
   market: string;
-  enabled: boolean;
+  type: TradingStrategyType;
   params: VolatilityBreakoutParams | MovingAverageParams | RSIParams;
-  createdAt: Date;
-  updatedAt: Date;
+  id?: string;
+  enabled?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
   execute: (candles: Candle[]) => {
     shouldBuy: boolean;
     shouldSell: boolean;
@@ -157,4 +157,14 @@ export interface BacktestResult {
   expectancy: number;  // (승률 * 평균 이익) - ((1 - 승률) * 평균 손실)
   tradePatterns: TradePatterns;
   suggestions: StrategyImprovement[];
+}
+
+export interface BacktestRequest {
+  strategy: {
+    market: string;
+    type: TradingStrategyType;
+    params: Record<string, any>;
+  };
+  period: string;  // "1M" | "3M" | "6M" | "1Y"
+  initial_capital: number;  // 만원 단위
 } 

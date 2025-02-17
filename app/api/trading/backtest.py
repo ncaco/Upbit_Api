@@ -1,9 +1,93 @@
-from typing import List, Dict
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from typing import List, Dict, Optional
 from datetime import datetime
-from app.api.trading.backtest.models import BacktestResult, BacktestTrade
-from app.api.trading.strategies import TradingStrategy
-from app.api.trading.backtest.signal_calculator import calculate_signal
+import httpx
+from app.api.exchage.market import get_candles
+from app.api.trading.strategies import create_strategy, TradingStrategy
+from app.api.upbit.client import UpbitClient
 
+# 모델 정의
+class BacktestTrade(BaseModel):
+    timestamp: int
+    type: str
+    price: float
+    volume: float
+    profit: Optional[float] = None
+    profit_rate: Optional[float] = None
+    balance: float
+    cumulative_profit: float
+    cumulative_profit_rate: float
+
+class BacktestResult(BaseModel):
+    trades: List[BacktestTrade] = []
+    total_trades: int = 0
+    win_count: int = 0
+    loss_count: int = 0
+    total_profit: float = 0
+    profit_rate: float = 0
+    max_drawdown: float = 0
+    winning_streak: int = 0
+    losing_streak: int = 0
+    average_profit: float = 0
+    average_loss: float = 0
+    max_profit: float = 0
+    max_loss: float = 0
+    profit_factor: float = 0
+    average_holding_period: float = 0
+
+class BacktestRequest(BaseModel):
+    strategy: Dict  # TradingStrategy 대신 Dict 사용
+    period: str
+    initial_capital: float
+
+# 신호 계산 함수
+def calculate_signal(strategy: TradingStrategy, candle: Dict) -> Optional[Dict]:
+    """
+    전략에 따른 매매 신호 계산
+    
+    Args:
+        strategy: 거래 전략 객체
+        candle: 현재 캔들 데이터
+        
+    Returns:
+        Dict: 매수/매도 신호를 포함한 딕셔너리
+        None: 신호가 없는 경우
+    """
+    if strategy.type == "VOLATILITY_BREAKOUT":
+        return _calculate_volatility_breakout_signal(strategy, candle)
+    elif strategy.type == "MOVING_AVERAGE":
+        return _calculate_moving_average_signal(strategy, candle)
+    elif strategy.type == "RSI":
+        return _calculate_rsi_signal(strategy, candle)
+    return None
+
+def _calculate_volatility_breakout_signal(strategy: TradingStrategy, candle: Dict) -> Optional[Dict]:
+    """변동성 돌파 전략 신호 계산"""
+    k = strategy.params.get("k", 0.5)
+    target_price = candle["opening_price"] + (candle["high_price"] - candle["low_price"]) * k
+    
+    # 매수 신호: 현재가가 목표가를 돌파
+    if candle["trade_price"] >= target_price:
+        return {"should_buy": True}
+    
+    # 매도 신호: 1% 이상 하락
+    if candle["trade_price"] <= target_price * 0.99:
+        return {"should_sell": True}
+    
+    return None
+
+def _calculate_moving_average_signal(strategy: TradingStrategy, candle: Dict) -> Optional[Dict]:
+    """이동평균 전략 신호 계산"""
+    # TODO: 이동평균 계산 및 신호 생성 로직 구현
+    return None
+
+def _calculate_rsi_signal(strategy: TradingStrategy, candle: Dict) -> Optional[Dict]:
+    """RSI 전략 신호 계산"""
+    # TODO: RSI 계산 및 신호 생성 로직 구현
+    return None
+
+# 백테스터 클래스
 class Backtester:
     def __init__(self, candles: List[Dict], strategy: TradingStrategy, initial_balance: float = 1000000):
         self.candles = candles
@@ -210,6 +294,56 @@ class Backtester:
             
             if holding_periods:
                 result.average_holding_period = sum(holding_periods) / len(holding_periods)
-            
-            # 샤프 비율 계산
-            self._calculate_sharpe_ratio(result, trades) 
+
+# API 라우터
+router = APIRouter(
+    prefix="/api/trading/backtest",
+    tags=["10. Backtest"]
+)
+
+@router.post("", response_model=BacktestResult)
+async def run_backtest(request: BacktestRequest) -> BacktestResult:
+    """백테스트 실행 엔드포인트"""
+    try:
+        # 기간에 따른 캔들 개수 설정
+        candle_count = {
+            "1M": 43200,   # 30일 * 24시간 * 60분
+            "3M": 129600,  # 90일 * 24시간 * 60분
+            "6M": 259200,  # 180일 * 24시간 * 60분
+            "1Y": 525600   # 365일 * 24시간 * 60분
+        }.get(request.period, 43200)
+        
+        # 캔들 데이터 조회
+        client = UpbitClient()
+        candles = await client.fetch_candles(
+            market=request.strategy["market"],
+            count=candle_count,
+            unit="1"  # 1분봉 사용
+        )
+        
+        # 전략 생성
+        strategy = await TradingStrategy.create(request.strategy)
+        
+        # 백테스터 실행
+        backtester = Backtester(
+            candles=candles,
+            strategy=strategy,
+            initial_balance=request.initial_capital * 10000  # 만원 단위 변환
+        )
+        
+        result = await backtester.run()
+        return result
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Backtesting failed: {str(e)}"
+        )
+
+@router.get("/results/{strategy_id}", response_model=List[BacktestResult])
+async def get_backtest_results(strategy_id: str):
+    """
+    특정 전략의 백테스트 결과 이력 조회
+    """
+    # TODO: 결과 이력 저장소 구현 필요
+    return [] 

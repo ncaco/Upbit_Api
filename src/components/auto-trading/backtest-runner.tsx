@@ -375,9 +375,13 @@ export function BacktestRunner({ strategy, onClose }: BacktestRunnerProps) {
       setIntermediateResult(null);
 
       const result = await trading.backtest({
-        strategy,
+        strategy: {
+          market: strategy.market,
+          type: strategy.type,
+          params: strategy.params
+        },
         period,
-        initialCapital
+        initial_capital: initialCapital
       });
 
       setResult(result);
