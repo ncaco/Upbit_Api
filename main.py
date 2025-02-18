@@ -6,10 +6,7 @@ from app.api.exchage import withdraws
 from app.api.exchage import deposits
 from app.api.exchage import status
 from app.api.exchage import market
-from app.api.trading import logs
-from app.api.trading import stats
-from app.api.trading import strategies
-from app.api.trading import backtest
+
 
 
 app = FastAPI(
@@ -34,10 +31,7 @@ app.include_router(withdraws.router)
 app.include_router(deposits.router)
 app.include_router(status.router)
 app.include_router(market.router)
-app.include_router(logs.router)
-app.include_router(stats.router)
-app.include_router(strategies.router)
-app.include_router(backtest.router)
+
 
 @app.get("/")
 async def root():
