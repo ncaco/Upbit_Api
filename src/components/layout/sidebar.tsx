@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 const menuItems = [
   { href: "/", label: "대시보드" },
+  { href: "/auto-trading", label: "자동매매" },
   { href: "/assets", label: "자산현황" },
   { href: "/settings", label: "설정" },
 ];
