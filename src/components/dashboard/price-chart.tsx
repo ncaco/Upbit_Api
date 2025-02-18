@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { market } from '@/lib/api';
+import { market } from '@/lib/api/market';
 import { Card } from '@/components/ui/card';
 import { Line } from 'react-chartjs-2';
 import {
@@ -31,13 +31,13 @@ export function PriceChart() {
   });
 
   const chartData = {
-    labels: candles?.data?.map(candle => 
+    labels: candles?.data?.map((candle: any) => 
       new Date(candle.timestamp).toLocaleTimeString()
     ) || [],
     datasets: [
       {
         label: '가격',
-        data: candles?.data?.map(candle => candle.trade_price) || [],
+        data: candles?.data?.map((candle: any) => candle.trade_price) || [],
         borderColor: 'rgb(75, 192, 192)',
         tension: 0.1
       }

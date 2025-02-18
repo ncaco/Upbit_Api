@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { market } from '@/lib/api';
+import { market } from '@/lib/api/market';
 import { formatNumber } from '@/lib/utils';
 import type { Trade } from '@/lib/api/market';
 

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { account } from '@/lib/api';
+import { account } from '@/lib/api/account';
 import { formatNumber } from '@/lib/utils';
 
 interface Account {
@@ -14,7 +14,7 @@ interface Account {
 export default function AssetsPage() {
   const { data: accounts } = useQuery({
     queryKey: ['accounts'],
-    queryFn: () => account.getAccounts(),
+    queryFn: () => account.getBalance(),
   });
 
   const totalKRW = accounts?.data?.reduce((total: number, account: Account) => {

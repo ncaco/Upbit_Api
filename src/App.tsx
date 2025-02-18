@@ -1,7 +1,8 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { RootLayout } from '@/components/layout/root-layout';
 import DashboardPage from '@/pages/dashboard';
 import AssetsPage from '@/pages/assets';
+import { Settings } from '@/pages/settings';
 import './App.css';
 
 const router = createBrowserRouter([
@@ -9,14 +10,9 @@ const router = createBrowserRouter([
     path: '/',
     element: <RootLayout />,
     children: [
-      {
-        index: true,
-        element: <DashboardPage />
-      },
-      {
-        path: 'assets',
-        element: <AssetsPage />
-      }
+      { index: true, element: <DashboardPage /> },
+      { path: 'assets', element: <AssetsPage /> },
+      { path: 'settings', element: <Settings /> }
     ]
   }
 ]);

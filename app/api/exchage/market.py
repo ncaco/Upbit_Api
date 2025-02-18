@@ -26,8 +26,13 @@ async def get_market_all(is_details: bool = False):
             params={'isDetails': is_details}
         )
         response.raise_for_status()
+        
+        # 응답 데이터 로깅
+        print("Upbit API response:", response.json())
+        
         return response.json()
     except Exception as e:
+        print("Error:", str(e))  # 에러 로깅
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/candles/minutes/{unit}")

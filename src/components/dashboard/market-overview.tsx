@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { market } from '@/lib/api';
+import { market } from '@/lib/api/market';
 import { formatNumber } from '@/lib/utils';
 
 interface MarketOverviewProps {
@@ -17,8 +17,6 @@ export function MarketOverview({ market: marketCode }: MarketOverviewProps) {
     },
     refetchInterval: 1000
   });
-
-  const [base, quote] = marketCode.split('-');
 
   if (isLoading || !ticker) {
     return (
@@ -41,6 +39,7 @@ export function MarketOverview({ market: marketCode }: MarketOverviewProps) {
     );
   }
 
+  const [base, quote] = marketCode.split('-');
   const isPositive = ticker.change === 'RISE';
   const changeColor = isPositive ? 'text-[#d24f45]' : 'text-[#1261c4]';
   const changeSign = isPositive ? '+' : '';
@@ -72,13 +71,13 @@ export function MarketOverview({ market: marketCode }: MarketOverviewProps) {
         <div>
           <div className="text-sm text-gray-500">거래량(24H)</div>
           <div className="mt-1 text-lg font-medium">
-            {formatNumber(ticker.acc_trade_volume)} {quote}
+            {formatNumber(ticker.acc_trade_volume_24h)} {quote}
           </div>
         </div>
         <div>
           <div className="text-sm text-gray-500">거래대금(24H)</div>
           <div className="mt-1 text-lg font-medium">
-            {formatNumber(ticker.acc_trade_price)} {base}
+            {formatNumber(ticker.acc_trade_price_24h)} {base}
           </div>
         </div>
         <div>

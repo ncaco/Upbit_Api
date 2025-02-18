@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { account } from '@/lib/api';
+import { account } from '@/lib/api/account';
 import { formatNumber } from '@/lib/utils';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
@@ -16,7 +16,7 @@ interface Account {
 export function AssetSummary() {
   const { data: accounts } = useQuery({
     queryKey: ['accounts'],
-    queryFn: () => account.getAccounts(),
+    queryFn: () => account.getBalance(),
   });
 
   const chartData = {

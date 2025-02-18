@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { market } from '@/lib/api';
+import { market } from '@/lib/api/market';
 import type { Market, Ticker } from '@/lib/api/market';
 import { MarketOverview } from '@/components/dashboard/market-overview';
 import { RecentTrades } from '@/components/dashboard/recent-trades';
@@ -32,21 +32,24 @@ export default function DashboardPage() {
   const [sortOption, setSortOption] = useState<SortOption>('price');
   const [selectedMarket, setSelectedMarket] = useState<string>('KRW-BTC');
 
-  // 마켓 목록 및 현재가 조회
+  // 마켓 목록 조회
   const { data: marketsData, isLoading: isMarketsLoading } = useQuery({
     queryKey: ['markets'],
     queryFn: async () => {
-      const marketsResponse = await market.getMarkets();
-      const krwMarkets = marketsResponse.data.filter((m: Market) => m.market.startsWith('KRW-'));
-      const tickersResponse = await market.getTicker(krwMarkets.map((m: Market) => m.market).join(','));
+      const response = await market.getMarkets();
+      // KRW 마켓만 필터링
+      const krwMarkets = response.data.filter((m: Market) => m.market.startsWith('KRW-'));
       
-      return krwMarkets.map((m: Market) => {
-        const ticker = tickersResponse.data.find((t: Ticker) => t.market === m.market);
-        return {
-          ...m,
-          ticker
-        } as MarketWithTicker;
-      });
+      // 각 마켓의 현재가 조회
+      const tickerResponse = await market.getTicker(
+        krwMarkets.map((m: Market) => m.market).join(',')
+      );
+      
+      // 마켓 정보와 현재가 정보 합치기
+      return krwMarkets.map((m: Market) => ({
+        ...m,
+        ticker: tickerResponse.data.find((t: Ticker) => t.market === m.market)
+      }));
     }
   });
 
@@ -60,7 +63,7 @@ export default function DashboardPage() {
         label: market.korean_name,
         volume: market.ticker?.acc_trade_price_24h || 0,
         price: market.ticker?.trade_price || 0,
-        change: market.ticker?.signed_change_rate || 0
+        change: market.ticker?.change_rate || 0
       }))
       .sort((a: SortableMarket, b: SortableMarket) => {
         switch (sortOption) {
