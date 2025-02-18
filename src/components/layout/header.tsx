@@ -26,9 +26,6 @@ export function Header() {
               <Link to="/" className="text-gray-900 hover:text-[#093687] px-3 py-2 text-sm font-medium">
                 거래소
               </Link>
-              <Link to="/trade" className="text-gray-500 hover:text-[#093687] px-3 py-2 text-sm font-medium">
-                자동매매
-              </Link>
               <Link to="/assets" className="text-gray-500 hover:text-[#093687] px-3 py-2 text-sm font-medium">
                 투자내역
               </Link>

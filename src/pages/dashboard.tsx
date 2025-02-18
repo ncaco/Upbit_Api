@@ -5,7 +5,6 @@ import type { Market, Ticker } from '@/lib/api/market';
 import { MarketOverview } from '@/components/dashboard/market-overview';
 import { RecentTrades } from '@/components/dashboard/recent-trades';
 import { AssetSummary } from '@/components/dashboard/asset-summary';
-import { AutoTradingStatus } from '@/components/dashboard/auto-trading-status';
 import { RealTimePrice } from '@/components/dashboard/real-time-price';
 
 interface MarketWithTicker extends Market {
@@ -140,10 +139,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 자산 및 자동매매 현황 */}
-      <div className="grid-container grid-cols-1 lg:grid-cols-2">
+      {/* 자산 현황 */}
+      <div className="grid-container grid-cols-1">
         <AssetSummary />
-        <AutoTradingStatus />
       </div>
 
       {/* 최근 체결 */}
