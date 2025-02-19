@@ -14,5 +14,9 @@ python.exe -m pip install --upgrade pip
 # 의존성 설치
 pip install -r requirements.txt
 
-# 서버 실행
-uvicorn main:app --reload 
+# npm 의존성 설치
+npm install
+
+# 백엔드 서버와 프론트엔드 동시 실행
+Start-Process powershell { uvicorn main:app --reload }
+npm run dev
