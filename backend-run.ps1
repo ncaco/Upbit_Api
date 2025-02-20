@@ -19,4 +19,4 @@ npm install
 
 # 백엔드 서버와 프론트엔드 동시 실행
 Start-Process powershell { uvicorn main:app --reload }
-npm run dev
+Start-Process powershell { npm run dev }
