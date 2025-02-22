@@ -6,7 +6,7 @@ from app.api.exchage import withdraws
 from app.api.exchage import deposits
 from app.api.exchage import status
 from app.api.exchage import market
-
+from app.api.schedule.scheduler import init_scheduler
 
 
 app = FastAPI(
@@ -14,6 +14,11 @@ app = FastAPI(
     description="Upbit Exchange API Wrapper",
     version="1.0.0"
 )
+
+@app.on_event("startup")
+async def startup_event():
+    """앱 시작시 스케줄러 초기화"""
+    init_scheduler()
 
 # CORS 설정
 app.add_middleware(
